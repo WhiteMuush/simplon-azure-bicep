@@ -1,0 +1,99 @@
+name: Provision
+
+# Pick a stack, let the checks run, then approve the deployment by hand.
+on:
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: Stack to deploy
+        required: true
+        type: choice
+        options:
+          - linux-web-server
+          - scalable-web-tier
+          - app-service-platform
+          - container-group
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  SSH_PUBLIC_KEY: ${{ vars.SSH_PUBLIC_KEY }}
+  MY_SOURCE_IP: ${{ vars.ALLOWED_SSH_SOURCE_IP }}
+
+jobs:
+  check:
+    name: Format, lint, validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - run: az bicep install
+
+      - run: make check STACK=${{ inputs.stack }}
+
+  plan:
+    name: Preflight and what-if
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - run: az bicep install
+
+      # The plan is what the reviewer reads before approving the next job.
+      - name: What-if
+        run: |
+          {
+            echo "## Planned changes for \`${{ inputs.stack }}\`"
+            echo
+            echo '```'
+            make what-if STACK=${{ inputs.stack }} 2>&1 | sed 's/\x1b\[[0-9;]*m//g'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy
+    needs: plan
+    runs-on: ubuntu-latest
+    # Protected environment: a human approves before this job starts.
+    environment: azure
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - run: az bicep install
+
+      - run: make deploy STACK=${{ inputs.stack }}
+
+      - name: Outputs
+        run: |
+          {
+            echo "## Outputs of \`${{ inputs.stack }}\`"
+            echo
+            echo '```json'
+            make outputs STACK=${{ inputs.stack }} 2>&1 | sed 's/\x1b\[[0-9;]*m//g'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

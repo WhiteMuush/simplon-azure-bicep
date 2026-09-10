@@ -6,6 +6,7 @@ export RESOURCE_GROUP
 
 include make/setup.mk
 include make/bicep.mk
+include make/ci.mk
 
 ##@ General
 

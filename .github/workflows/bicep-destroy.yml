@@ -1,0 +1,71 @@
+name: Destroy
+
+# Deleting is never implicit: the stack name has to be typed again, and a human
+# approves before anything is removed.
+on:
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: Stack to destroy
+        required: true
+        type: choice
+        options:
+          - linux-web-server
+          - scalable-web-tier
+          - app-service-platform
+          - container-group
+      confirm:
+        description: Type the stack name again to confirm
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+
+jobs:
+  confirm:
+    name: Check the confirmation
+    runs-on: ubuntu-latest
+    steps:
+      - name: The typed name must match the chosen stack
+        run: |
+          if [ "${{ inputs.confirm }}" != "${{ inputs.stack }}" ]; then
+            echo "Typed '${{ inputs.confirm }}', expected '${{ inputs.stack }}'. Nothing deleted." >&2
+            exit 1
+          fi
+
+  destroy:
+    name: Destroy
+    needs: confirm
+    runs-on: ubuntu-latest
+    # Protected environment: a human approves before this job starts.
+    environment: azure
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - run: az bicep install
+
+      # FORCE skips the interactive prompt, the confirm job replaced it.
+      - name: Delete the resources of the stack
+        run: FORCE=1 make destroy STACK=${{ inputs.stack }}
+
+      - name: What is left in the resource group
+        run: |
+          {
+            echo "## Resource group \`$RESOURCE_GROUP\` after the destroy"
+            echo
+            echo '```'
+            az resource list --resource-group "$RESOURCE_GROUP" --output table
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

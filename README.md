@@ -72,6 +72,28 @@ Every stack is an Azure **deployment stack**, not a plain deployment. The stack 
 
 `make what-if` runs a preflight first: it compares what the template asks for with what the subscription really allows, VM size offered in the region, family quota, hypervisor generation, public IP SKU. It catches before deployment what Azure would only report at creation time.
 
+## Pipelines
+
+Two manual workflows, in the Actions tab.
+
+**Provision** takes the stack to deploy as a dropdown, then runs three jobs in order:
+
+1. `check`, format, lint and Azure validation
+2. `plan`, preflight against the subscription limits, then a what-if written to the run summary
+3. `deploy`, held on the `azure` environment until a human approves it
+
+The reviewer reads the plan of job 2 before approving job 3, so nothing reaches Azure unseen.
+
+**Destroy** takes the same dropdown plus the stack name typed again. A first job refuses the run if the two do not match, and the deletion itself waits for the same manual approval.
+
+Both authenticate through **OIDC**: GitHub presents a short lived token, Azure trades it for a session. No credential is stored in the repository.
+
+```bash
+make ci-setup   # app registration, federated credentials, role assignment, repo variables
+```
+
+The federated credentials cover two subjects, the `main` branch for the first jobs and the `azure` environment for the approved ones. The service principal is Contributor on the resource group only, never on the subscription.
+
 ## Secrets
 
 Nothing sensitive enters the repository.
