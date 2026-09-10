@@ -5,7 +5,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 # One colour per section. Unlisted sections fall back to DEFAULT_COLOR.
-SECTION_COLORS="Setup=38;5;170,Bicep=38;5;39,General=38;5;80"
+SECTION_COLORS="Setup=38;5;170,Bicep=38;5;39,CI=38;5;220,General=38;5;80"
 DEFAULT_COLOR="38;5;80"
 
 # Sections follow the include order of the Makefile, not the alphabet.
