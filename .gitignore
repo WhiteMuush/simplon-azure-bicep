@@ -12,3 +12,11 @@ infra/**/*.json
 # Fichiers de parametres reels
 *.bicepparam
 !*.sample.bicepparam
+
+# Cles SSH, ne doivent jamais entrer dans le depot
+*.pem
+*.key
+*.ppk
+id_rsa*
+id_ed25519*
+tp-bicep-az104*
