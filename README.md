@@ -1,4 +1,4 @@
-# <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg" height="28" alt="Azure" align="center"/> Azure compute resources: infrastructure as code with Bicep <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg" height="28" alt="Bash" align="center"/>
+# <img src="https://cdn.jsdelivr.net/gh/Azure/bicep@main/docs/images/BicepLogoImage.svg" height="28" alt="Bicep" align="center"/> Azure compute resources: infrastructure as code with Bicep <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg" height="28" alt="Azure" align="center"/>
 
 ![Bicep](https://img.shields.io/badge/Bicep-ARM-0078D4?logo=microsoftazure&logoColor=white)
 ![Azure CLI](https://img.shields.io/badge/Azure%20CLI-2.88-0078D4?logo=microsoftazure&logoColor=white)
