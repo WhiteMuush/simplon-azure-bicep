@@ -64,8 +64,8 @@ case "$ACTION" in
   deploy)
     # A deployment stack, not a plain deployment: the resource group is shared
     # and pre-created, so the stack is what remembers which resources to remove.
-    preflight
     step "Deploying ${STACK_NAME} to ${RESOURCE_GROUP}"
+    warn "Run 'make what-if STACK=${STACK_NAME}' first, it catches what Azure would refuse"
     warn_missing_params
     mapfile -t args < <(template_args)
     az stack group create "${args[@]}" \

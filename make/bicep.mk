@@ -11,7 +11,7 @@ check: ## Format, lint, then validate the stack against Azure
 what-if: ## Check the subscription limits, then show the planned changes
 	@scripts/bicep/bicep.sh what-if "$(STACK)"
 
-deploy: ## Check the subscription limits, then deploy the stack
+deploy: ## Deploy the stack, run what-if first
 	@scripts/bicep/bicep.sh deploy "$(STACK)"
 
 destroy: ## Delete the resources of the stack, asks for confirmation
