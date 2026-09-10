@@ -1,0 +1,5 @@
+*.json.bak
+*.parameters.local.json
+.azure/
+*.log
+.DS_Store
