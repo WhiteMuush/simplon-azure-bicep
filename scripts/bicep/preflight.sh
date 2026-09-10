@@ -97,9 +97,15 @@ check_public_ip() {
 
 step "Preflight of ${STACK_NAME} against ${RESOURCE_GROUP} in ${LOCATION}"
 
-mapfile -t resources < <(inventory)
-[ "${#resources[@]}" -gt 0 ] || die "Nothing to check, the inventory came back empty."
+found="$(inventory)" || die "Could not read the template inventory."
 
+# A stack made only of App Service or containers has nothing size related.
+if [ -z "$found" ]; then
+  ok "No VM nor public IP in this stack, nothing to check"
+  exit 0
+fi
+
+mapfile -t resources <<< "$found"
 for line in "${resources[@]}"; do
   IFS=$'\t' read -r kind first second <<< "$line"
   case "$kind" in
