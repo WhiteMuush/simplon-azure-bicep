@@ -1,8 +1,15 @@
-# simplon-azure-bicep
+# <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg" height="28" alt="Azure" align="center"/> Azure compute resources: infrastructure as code with Bicep <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg" height="28" alt="Bash" align="center"/>
 
-Azure compute resources as code with Bicep: a Linux virtual machine, a scale set with autoscale, an App Service platform and a container group.
+![Bicep](https://img.shields.io/badge/Bicep-ARM-0078D4?logo=microsoftazure&logoColor=white)
+![Azure CLI](https://img.shields.io/badge/Azure%20CLI-2.88-0078D4?logo=microsoftazure&logoColor=white)
+![Deployment stacks](https://img.shields.io/badge/Deployment-stacks-5C2D91)
+![Make](https://img.shields.io/badge/Make-driven-6D8086?logo=gnubash&logoColor=white)
+![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu&logoColor=white)
+![Status](https://img.shields.io/badge/status-deployed-brightgreen)
 
-Full lab instructions: [docs/CONSIGNES.md](docs/CONSIGNES.md).
+Four deployable stacks covering the AZ-104 compute path: a Linux VM behind an NSG, a scale set that scales on CPU, an App Service platform with a staging slot, and a container group. Every stack is a deployment stack, driven by `make`, with a preflight that checks the subscription limits before Azure does.
+
+> Brief: [docs/CONSIGNES.md](docs/CONSIGNES.md)
 
 ## Getting started
 
