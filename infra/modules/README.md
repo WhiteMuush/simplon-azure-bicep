@@ -1,11 +1,10 @@
 # Modules
 
-Briques Bicep reutilisables. Un module n'est jamais deploye seul : il est appele par un stack de `infra/stacks/`, recoit des `param` et renvoie des `output`.
+Reusable Bicep building blocks. A module is never deployed on its own: a stack of `infra/stacks/` calls it, passes `param` values and reads its `output`.
 
-| Module | Role | Sorties principales |
+| Module | Role | Main outputs |
 |---|---|---|
-| `network.bicep` | NSG, reseau virtuel et subnet | ID du subnet |
-| `linux-vm.bicep` | VM complete a partir d'un ID de subnet : IP publique, NIC, VM, extension | FQDN, commande SSH |
-| `custom-script.bicep` | Extension CustomScript partagee entre la VM et le scale set | aucune |
+| `network.bicep` | NSG, virtual network and subnet | Subnet ID |
+| `custom-script.bicep` | CustomScript extension shared by the VM and the scale set | none |
 
-Ces deux modules couvrent le bonus du TP : le stack `linux-web-server` appelle le module reseau une fois, puis le module VM plusieurs fois via une boucle `for` pilotee par un parametre `vmCount`.
+These modules cover the bonus of the lab: the `linux-web-server` stack calls the network module once, then the VM module several times through a `for` loop driven by a `vmCount` parameter.
