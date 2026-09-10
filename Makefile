@@ -1,4 +1,7 @@
+STACK ?=
+
 include make/setup.mk
+include make/bicep.mk
 
 ##@ General
 
