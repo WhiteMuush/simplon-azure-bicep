@@ -100,7 +100,7 @@ Nothing sensitive enters the repository.
 
 - The private SSH key stays in `~/.ssh/`, only the public key travels.
 - The public key and the source IP are read from the environment by the parameter files, through `readEnvironmentVariable`, and exported by `scripts/lib.sh`. Nothing to copy by hand.
-- `config.env` and the real `*.bicepparam` files are Git ignored. Every stack ships a `dev.sample.bicepparam` as a committed template.
+- `config.env` is Git ignored, everyone has their own. The `dev.bicepparam` files are committed on purpose: they hold no secret, only names and sizes.
 
 ## Cleanup
 

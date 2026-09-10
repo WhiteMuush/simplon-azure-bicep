@@ -1,4 +1,3 @@
-// Copy to dev.bicepparam, which Git ignores.
 using './main.bicep'
 
 param prefix = 'mpweb'

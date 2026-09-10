@@ -9,9 +9,8 @@
 # ARM JSON genere par az bicep build
 infra/**/*.json
 
-# Fichiers de parametres reels
-*.bicepparam
-!*.sample.bicepparam
+# Local overrides only, the committed dev.bicepparam carry no secret
+*.local.bicepparam
 
 # Cles SSH, ne doivent jamais entrer dans le depot
 *.pem
