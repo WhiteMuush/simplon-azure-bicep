@@ -28,6 +28,16 @@ Consignes completes du TP : [docs/CONSIGNES.md](docs/CONSIGNES.md).
 - **Aucun secret en dur.** Cle SSH publique et IP source passees au deploiement. Chaque stack fournit un `dev.sample.bicepparam` a copier en `dev.bicepparam`, ignore par Git.
 - **Chaque stack est valide par une verification**, pas par un simple `Succeeded` au deploiement. La commande est dans le README du stack.
 
+## Prerequis
+
+```bash
+make ssh-key        # genere ~/.ssh/tp-bicep-az104 si absente, avec les bonnes permissions
+make ssh-key-show   # affiche la cle publique a passer en parametre
+make my-ip          # affiche l'IP publique source a autoriser dans le NSG
+```
+
+La cle privee reste dans `~/.ssh/`, jamais dans le depot. Seule la cle publique circule, en parametre de deploiement.
+
 ## Cycle de travail
 
 ```bash
