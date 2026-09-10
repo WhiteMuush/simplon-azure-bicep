@@ -79,8 +79,11 @@ resolve_stack() {
 }
 
 # One resource group per stack, as the lab requires.
-stack_rg() {
+require_alias() {
   [ -n "$ALIAS" ] || die "No alias yet. Run 'make setup'."
+}
+
+stack_rg() {
   echo "rg-${ALIAS}-tp104-${1}"
 }
 

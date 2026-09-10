@@ -5,6 +5,8 @@
 # shellcheck source=scripts/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 
+require_alias
+
 ACTION="${1:-}"
 [ -n "$ACTION" ] || die "Usage: bicep.sh <action> [stack]"
 
