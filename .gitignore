@@ -20,3 +20,8 @@ infra/**/*.json
 id_rsa*
 id_ed25519*
 tp-bicep-az104*
+
+# Variables locales, jamais commitees
+.env
+!.env.example
+config.env

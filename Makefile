@@ -1,4 +1,13 @@
+-include config.env
+
+LOCATION ?= francecentral
+STACK ?=
+
+export ALIAS
+export LOCATION
+
 include make/setup.mk
+include make/bicep.mk
 
 ##@ General
 
