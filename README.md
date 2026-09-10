@@ -1,82 +1,82 @@
 # simplon-azure-bicep
 
-Infrastructure as code Bicep pour des ressources de calcul Azure : machine virtuelle, scale set avec autoscale, App Service et Container Instances.
+Azure compute resources as code with Bicep: a Linux virtual machine, a scale set with autoscale, an App Service platform and a container group.
 
-Consignes completes du TP : [docs/CONSIGNES.md](docs/CONSIGNES.md).
+Full lab instructions: [docs/CONSIGNES.md](docs/CONSIGNES.md).
 
-## Demarrage
+## Getting started
 
-Trois commandes, rien a editer a la main.
-
-```bash
-make setup                          # questions de configuration, une seule fois
-make what-if STACK=linux-web-server # ce qui va etre cree, sans rien creer
-make deploy  STACK=linux-web-server # deployer
-```
-
-`make setup` verifie la connexion Azure, propose le resource group ou vous avez les droits, genere la cle SSH si elle manque, puis ecrit `config.env` a la racine. Ce fichier est local et ignore par Git : chacun a le sien, personne ne modifie de fichier suivi.
-
-Sans `STACK=`, les cibles proposent la liste des stacks en interactif.
-
-## Les cibles
+Three commands, nothing to edit by hand.
 
 ```bash
-make            # ou 'make help', liste tout
+make setup                          # configuration questions, once
+make what-if STACK=linux-web-server # what would be created, creating nothing
+make deploy  STACK=linux-web-server # deploy
 ```
 
-| Cible | Role |
+`make setup` checks the Azure sign-in, offers the resource groups you may write to, generates the SSH key if it is missing, then writes `config.env` at the root. That file is local and Git ignored: everyone has their own, nobody edits a tracked file.
+
+Without `STACK=`, the targets ask which stack to use.
+
+## Targets
+
+```bash
+make            # same as 'make help', lists everything
+```
+
+| Target | Role |
 |---|---|
-| `setup` | Pose les questions et ecrit `config.env`. A lancer en premier. |
-| `ssh-key` | Genere `~/.ssh/tp-bicep-az104` avec les bonnes permissions. |
-| `ssh-key-show` | Affiche la cle publique. |
-| `my-ip` | Affiche l'IP publique source au format CIDR. |
-| `stacks` | Liste les stacks et leur resource group. |
-| `check` | Formate, lint, puis fait valider le template par Azure. |
-| `what-if` | Verifie les limites de l'abonnement, puis affiche les changements prevus. |
-| `deploy` | Deploie le stack. |
-| `destroy` | Supprime les ressources du stack, avec confirmation. |
-| `outputs` | Affiche les sorties du stack deploye. |
+| `setup` | Ask the questions and write `config.env`. Run this first. |
+| `ssh-key` | Generate `~/.ssh/tp-bicep-az104` with the right permissions. |
+| `ssh-key-show` | Print the public key. |
+| `my-ip` | Print your public source IP in CIDR form. |
+| `stacks` | List the stacks and their resource group. |
+| `check` | Format, lint, then have Azure validate the template. |
+| `what-if` | Check the subscription limits, then show the planned changes. |
+| `deploy` | Deploy the stack. |
+| `destroy` | Delete the resources of the stack, asks for confirmation. |
+| `outputs` | Print the outputs of the deployed stack. |
 
-## Les stacks
+## Stacks
 
-| Stack | Ce qu'il deploie | Etape du TP |
+| Stack | What it deploys | Lab step |
 |---|---|---|
-| `linux-web-server` | VNet, subnet, NSG, IP publique, NIC, VM Ubuntu 22.04 en cle SSH, extension nginx | Etape 1 |
-| `scalable-web-tier` | Load Balancer Standard, VMSS Linux, autoscale CPU 70/30 | Etape 2 |
-| `app-service-platform` | Plan App Service Linux S1, Web App conteneurisee, slot `staging` | Etape 3 |
-| `container-group` | Groupe ACI de deux conteneurs, un web expose et un sidecar | Etape 4 |
+| `linux-web-server` | VNet, subnet, NSG, public IP, NIC, Ubuntu 22.04 VM with SSH key, nginx extension | Step 1 |
+| `scalable-web-tier` | Standard load balancer, Linux scale set, CPU autoscale 70/30 | Step 2 |
+| `app-service-platform` | Linux App Service plan S1, containerized web app, `staging` slot | Step 3 |
+| `container-group` | Container group of two containers, one web and one sidecar | Step 4 |
 
-Chaque stack a son `README.md` avec sa commande de verification, celle qui valide reellement l'exercice.
+Every stack has its own `README.md` with the verification command, the one that actually validates the exercise.
 
-## Organisation
+## Layout
 
-| Dossier | Role |
+| Directory | Role |
 |---|---|
-| `infra/stacks/` | Unites deployables. Un `main.bicep` et un `dev.bicepparam` par stack. |
-| `infra/modules/` | Briques Bicep reutilisables, appelees par un stack. |
-| `make/` | Un fichier `.mk` par domaine, sans logique. |
-| `scripts/` | Un script par action, appele par une cible du Makefile. |
-| `.github/workflows/` | Provisioning et destruction via GitHub Actions. |
-| `docs/` | Consignes et documentation. |
+| `infra/stacks/` | Deployable units. One `main.bicep` and one `dev.bicepparam` per stack. |
+| `infra/modules/` | Reusable Bicep building blocks, called by a stack. |
+| `make/` | One `.mk` file per domain, no logic in them. |
+| `scripts/` | One script per action, called by a Makefile target. |
+| `.github/workflows/` | Provisioning and destruction through GitHub Actions. |
+| `docs/` | Instructions and documentation. |
 
-## Comment c'est deploye
+## How it is deployed
 
-Chaque stack est une **deployment stack** Azure, pas un simple deploiement. La stack retient les ressources qu'elle gere, ce qui permet a `make destroy` de les supprimer sans toucher au resource group, partage et pre-cree sur cet abonnement.
+Every stack is an Azure **deployment stack**, not a plain deployment. The stack remembers the resources it manages, which lets `make destroy` remove them without touching the resource group, shared and pre-created on this subscription.
 
-`make what-if` lance d'abord un preflight : il compare ce que le template demande a ce que l'abonnement autorise vraiment, taille de VM offerte dans la region, quota de la famille, generation d'hyperviseur, SKU d'IP publique. Il attrape avant le deploiement ce qu'Azure ne signalerait qu'a la creation.
+`make what-if` runs a preflight first: it compares what the template asks for with what the subscription really allows, VM size offered in the region, family quota, hypervisor generation, public IP SKU. It catches before deployment what Azure would only report at creation time.
 
 ## Secrets
 
-Rien de sensible n'entre dans le depot.
+Nothing sensitive enters the repository.
 
-- La cle privee SSH reste dans `~/.ssh/`, seule la cle publique circule.
-- La cle publique et l'IP source sont lues depuis l'environnement par les fichiers de parametres, via `readEnvironmentVariable`, et exportees par `scripts/lib.sh`. Rien a recopier.
-- `config.env` et les vrais `*.bicepparam` sont ignores par Git. Chaque stack fournit un `dev.sample.bicepparam` commite en modele.
+- The private SSH key stays in `~/.ssh/`, only the public key travels.
+- The public key and the source IP are read from the environment by the parameter files, through `readEnvironmentVariable`, and exported by `scripts/lib.sh`. Nothing to copy by hand.
+- `config.env` and the real `*.bicepparam` files are Git ignored. Every stack ships a `dev.sample.bicepparam` as a committed template.
 
-## Nettoyage
+## Cleanup
 
 ```bash
 make destroy STACK=<stack>
 ```
 
-A lancer en fin de seance sur chaque stack deploye. Le plan App Service S1 est facture meme sans trafic.
+Run it on every deployed stack at the end of a session. The S1 App Service plan bills even with no traffic.

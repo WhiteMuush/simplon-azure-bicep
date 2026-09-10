@@ -1,40 +1,38 @@
 # app-service-platform
 
-Une plateforme App Service Linux hebergeant une Web App conteneurisee avec un slot de preproduction.
+A Linux App Service platform hosting a containerized web app with a staging slot.
 
-**Etape du TP :** Etape 3
+**Lab step:** Step 3
 
-## Ressources deployees
+## Resources
 
-- Plan App Service Linux, SKU Standard S1 (minimum requis pour les slots)
-- Web App conteneurisee sur image Docker publique, HTTPS force
-- Slot de deploiement \`staging\` sur le meme plan
+- Linux App Service plan, Standard S1 SKU, the minimum that supports slots
+- Containerized web app on a public Docker image, HTTPS enforced
+- `staging` deployment slot on the same plan, running a different image
 
-## Deploiement
+## Deploy
 
 ```bash
-RG=rg-<alias>-tp104-app-service-platform
-az group create -n $RG -l francecentral
-
-cp dev.sample.bicepparam dev.bicepparam   # renseigner les vraies valeurs
-az deployment group what-if -g $RG -f main.bicep -p dev.bicepparam
-az deployment group create  -g $RG -f main.bicep -p dev.bicepparam
+make setup                    # once, writes config.env
+make what-if STACK=app-service-platform
+make deploy  STACK=app-service-platform
+make outputs STACK=app-service-platform
 ```
 
 ## Verification
 
 ```bash
-curl -I https://<nom-webapp>.azurewebsites.net
-curl -I https://<nom-webapp>-staging.azurewebsites.net
-az webapp deployment slot swap -g $RG -n <nom-webapp> --slot staging --target-slot production
+curl -I https://<webapp-name>.azurewebsites.net
+curl -I https://<webapp-name>-staging.azurewebsites.net
+az webapp deployment slot swap -g <rg> -n <webapp-name> --slot staging --target-slot production
 ```
 
-Les deux URL doivent repondre 200 OK, et le contenu servi en production doit changer apres le swap.
+Both URLs must answer 200 OK, and the content served in production must change after the swap.
 
-Attention au cout : un plan S1 est facture meme sans trafic. Ne pas le laisser actif en dehors des seances.
+Watch the cost: an S1 plan bills even with no traffic. Do not leave it running outside the sessions.
 
-## Destruction
+## Destroy
 
 ```bash
-az group delete -n $RG --yes --no-wait
+make destroy STACK=app-service-platform
 ```

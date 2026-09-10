@@ -1,41 +1,39 @@
 # linux-web-server
 
-Une VM Linux exposee sur Internet, servant une page nginx qui affiche son nom d'hote.
+A Linux VM exposed on the Internet, serving an nginx page that shows its hostname.
 
-**Etape du TP :** Etape 1
+**Lab step:** Step 1
 
-## Ressources deployees
+## Resources
 
-- Reseau virtuel et subnet dedie
-- Groupe de securite reseau : SSH restreint a une IP source, HTTP ouvert
-- IP publique Standard avec nom DNS
-- Carte reseau
-- VM Ubuntu 22.04 LTS, authentification par cle SSH uniquement
-- Extension CustomScript installant nginx
+- Virtual network and a dedicated subnet
+- Network security group: SSH restricted to one source IP, HTTP open
+- Standard public IP with a DNS name
+- Network interface
+- Ubuntu 22.04 LTS VM, SSH key authentication only
+- CustomScript extension installing nginx
 
-## Deploiement
+## Deploy
 
 ```bash
-RG=rg-<alias>-tp104-linux-web-server
-az group create -n $RG -l francecentral
-
-cp dev.sample.bicepparam dev.bicepparam   # renseigner les vraies valeurs
-az deployment group what-if -g $RG -f main.bicep -p dev.bicepparam
-az deployment group create  -g $RG -f main.bicep -p dev.bicepparam
+make setup                    # once, writes config.env
+make what-if STACK=linux-web-server
+make deploy  STACK=linux-web-server
+make outputs STACK=linux-web-server
 ```
 
 ## Verification
 
 ```bash
-curl http://$(az deployment group show -g $RG -n main --query properties.outputs.fqdn.value -o tsv)
+curl "$(make outputs STACK=linux-web-server | python3 -c 'import json,sys; print(json.load(sys.stdin)["fqdn"]["value"])')"
 ```
 
-La page doit contenir le nom d'hote de la VM. Une connexion SSH par mot de passe doit etre refusee, et une tentative depuis une autre IP doit etre bloquee par le NSG.
+The page must contain the VM hostname. An SSH attempt using a password must be refused, and an attempt from another IP must be blocked by the NSG.
 
-L'extension met 1 a 2 minutes a s'executer apres la fin du deploiement.
+The extension takes 1 to 2 minutes to run after the deployment finishes.
 
-## Destruction
+## Destroy
 
 ```bash
-az group delete -n $RG --yes --no-wait
+make destroy STACK=linux-web-server
 ```
