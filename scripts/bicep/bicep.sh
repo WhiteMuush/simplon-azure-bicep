@@ -15,13 +15,10 @@ PARAMS="$(stack_params "$STACK_NAME")"
 
 [ -f "$TEMPLATE" ] || die "No template at ${TEMPLATE}."
 
-# Every action but 'build' talks to Azure.
-if [ "$ACTION" != "build" ]; then
-  require_resource_group
-  require_az
-  az group show --name "$RESOURCE_GROUP" >/dev/null 2>&1 ||
-    die "Resource group '${RESOURCE_GROUP}' not found. Run 'make setup'."
-fi
+require_resource_group
+require_az
+az group show --name "$RESOURCE_GROUP" >/dev/null 2>&1 ||
+  die "Resource group '${RESOURCE_GROUP}' not found. Run 'make setup'."
 
 template_args() {
   printf '%s\n' --resource-group "$RESOURCE_GROUP" --name "$STACK_NAME" --template-file "$TEMPLATE"
@@ -34,13 +31,16 @@ warn_missing_params() {
 }
 
 case "$ACTION" in
-  build)
-    step "Compiling ${STACK_NAME}"
-    az bicep build --file "$TEMPLATE" --stdout >/dev/null
-    ok "Template compiles"
-    ;;
+  check)
+    step "Formatting ${STACK_NAME}"
+    az bicep format --file "$TEMPLATE"
+    [ -z "$PARAMS" ] || az bicep format --file "$PARAMS"
+    ok "Files formatted"
 
-  validate)
+    step "Linting ${STACK_NAME}"
+    az bicep lint --file "$TEMPLATE"
+    ok "No linter error"
+
     step "Validating ${STACK_NAME} against ${RESOURCE_GROUP}"
     warn_missing_params
     mapfile -t args < <(template_args)
