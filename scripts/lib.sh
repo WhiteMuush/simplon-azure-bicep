@@ -26,6 +26,15 @@ if [ -f "${SSH_KEY}.pub" ]; then
   export SSH_PUBLIC_KEY
 fi
 
+# Same idea for the source IP the NSG rules open SSH to.
+my_source_ip() {
+  local ip
+  ip="$(curl -fsS --max-time 5 ifconfig.me 2>/dev/null)" || return 0
+  [ -z "$ip" ] || echo "${ip}/32"
+}
+MY_SOURCE_IP="${MY_SOURCE_IP:-$(my_source_ip)}"
+export MY_SOURCE_IP
+
 # Written by 'make setup'. The lab deploys into an existing resource group.
 RESOURCE_GROUP="${RESOURCE_GROUP:-}"
 
