@@ -5,13 +5,29 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STACKS_DIR="${PROJECT_ROOT}/infra/stacks"
+CONFIG_FILE="${PROJECT_ROOT}/config.env"
+
+# Written by 'make setup'. An explicit ALIAS in the environment still wins.
+if [ -z "${ALIAS:-}" ] && [ -f "$CONFIG_FILE" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$CONFIG_FILE"
+  set +a
+fi
 
 # Key pair used by every exercise that provisions a VM. Override with SSH_KEY.
 SSH_KEY="${SSH_KEY:-${HOME}/.ssh/tp-bicep-az104}"
 SSH_COMMENT="${SSH_COMMENT:-tp-bicep-az104}"
 
-# Naming and placement of the resource groups. Override with ALIAS or LOCATION.
-ALIAS="${ALIAS:-mpetit}"
+# Read by the parameter files through readEnvironmentVariable, so the public key
+# never has to be copied into a .bicepparam by hand.
+if [ -f "${SSH_KEY}.pub" ]; then
+  SSH_PUBLIC_KEY="$(cat "${SSH_KEY}.pub")"
+  export SSH_PUBLIC_KEY
+fi
+
+# Both come from config.env, written by 'make setup'.
+ALIAS="${ALIAS:-}"
 LOCATION="${LOCATION:-francecentral}"
 
 export STACK_NAME=""
@@ -64,6 +80,7 @@ resolve_stack() {
 
 # One resource group per stack, as the lab requires.
 stack_rg() {
+  [ -n "$ALIAS" ] || die "No alias yet. Run 'make setup'."
   echo "rg-${ALIAS}-tp104-${1}"
 }
 

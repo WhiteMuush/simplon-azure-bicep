@@ -24,3 +24,4 @@ tp-bicep-az104*
 # Variables locales, jamais commitees
 .env
 !.env.example
+config.env
