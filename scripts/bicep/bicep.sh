@@ -25,6 +25,11 @@ template_args() {
   [ -z "$PARAMS" ] || printf '%s\n' --parameters "$PARAMS"
 }
 
+# What the subscription allows, checked before anything reaches Azure.
+preflight() {
+  "$(dirname "${BASH_SOURCE[0]}")/preflight.sh" "$STACK_NAME"
+}
+
 warn_missing_params() {
   [ -n "$PARAMS" ] && return 0
   warn "No dev.bicepparam next to the template, parameters will be prompted"
@@ -49,6 +54,7 @@ case "$ACTION" in
     ;;
 
   what-if)
+    preflight
     step "Planned changes for ${STACK_NAME} in ${RESOURCE_GROUP}"
     warn_missing_params
     mapfile -t args < <(template_args)
@@ -58,6 +64,7 @@ case "$ACTION" in
   deploy)
     # A deployment stack, not a plain deployment: the resource group is shared
     # and pre-created, so the stack is what remembers which resources to remove.
+    preflight
     step "Deploying ${STACK_NAME} to ${RESOURCE_GROUP}"
     warn_missing_params
     mapfile -t args < <(template_args)
