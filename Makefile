@@ -1,10 +1,8 @@
 -include config.env
 
-LOCATION ?= francecentral
 STACK ?=
 
-export ALIAS
-export LOCATION
+export RESOURCE_GROUP
 
 include make/setup.mk
 include make/bicep.mk
