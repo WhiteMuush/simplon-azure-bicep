@@ -6,6 +6,7 @@ param adminUsername = 'azureuser'
 // Public key read from ~/.ssh/tp-bicep-az104.pub by the Makefile scripts.
 param authenticationType = 'sshPublicKey'
 param sshKey = trim(readEnvironmentVariable('SSH_PUBLIC_KEY'))
+param allowedSshSourceIp = readEnvironmentVariable('MY_SOURCE_IP')
 
 param ubuntuOSVersion = 'Ubuntu-2204'
 // Standard_B1s is not offered in francecentral, an Azure Policy limits the

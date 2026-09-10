@@ -40,7 +40,7 @@ var probeName = 'probe-http'
 var natPoolName = 'natpool-ssh'
 
 // Shows the instance name, so repeated calls prove the load is spread around.
-var installScript = 'apt-get update && apt-get install -y nginx stress-ng && echo "<html><body><h1>Instance : $(hostname)</h1></body></html>" > /var/www/html/index.html && systemctl restart nginx'
+var installScript = 'export DEBIAN_FRONTEND=noninteractive; apt-get update || true; apt-get install -y nginx stress-ng && echo "<html><body><h1>Instance : $(hostname)</h1></body></html>" > /var/www/html/index.html && systemctl restart nginx'
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: nsgName
