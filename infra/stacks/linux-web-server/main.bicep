@@ -24,6 +24,9 @@ param dnsLabelPrefix string = toLower('${vmName}-${uniqueString(resourceGroup().
 ])
 param ubuntuOSVersion string = 'Ubuntu-2204'
 
+@description('Your public IP in CIDR form. SSH is open to this address only.')
+param allowedSshSourceIp string
+
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
@@ -88,6 +91,7 @@ var extensionPublisher = 'Microsoft.Azure.Security.LinuxAttestation'
 var extensionVersion = '1.0'
 var maaTenantName = 'GuestAttestation'
 var maaEndpoint = substring('emptystring', 0, 0)
+var installScript = 'export DEBIAN_FRONTEND=noninteractive; apt-get update || true; apt-get install -y nginx && echo "<html><body><h1>Hote : $(hostname)</h1></body></html>" > /var/www/html/index.html && systemctl restart nginx'
 
 resource networkInterface 'Microsoft.Network/networkInterfaces@2023-09-01' = {
   name: networkInterfaceName
@@ -125,10 +129,23 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-09-0
           protocol: 'Tcp'
           access: 'Allow'
           direction: 'Inbound'
-          sourceAddressPrefix: '*'
+          sourceAddressPrefix: allowedSshSourceIp
           sourcePortRange: '*'
           destinationAddressPrefix: '*'
           destinationPortRange: '22'
+        }
+      }
+      {
+        name: 'HTTP'
+        properties: {
+          priority: 1010
+          protocol: 'Tcp'
+          access: 'Allow'
+          direction: 'Inbound'
+          sourceAddressPrefix: 'Internet'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '80'
         }
       }
     ]
@@ -226,6 +243,21 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' =
           maaTenantName: maaTenantName
         }
       }
+    }
+  }
+}
+
+resource nginxExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+  parent: vm
+  name: 'install-nginx'
+  location: location
+  properties: {
+    publisher: 'Microsoft.Azure.Extensions'
+    type: 'CustomScript'
+    typeHandlerVersion: '2.1'
+    autoUpgradeMinorVersion: true
+    settings: {
+      commandToExecute: installScript
     }
   }
 }
