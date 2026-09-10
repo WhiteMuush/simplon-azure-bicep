@@ -1,55 +1,82 @@
 # simplon-azure-bicep
 
-Infrastructure as code Bicep pour des ressources de calcul Azure : machines virtuelles, scale sets, App Service et Container Instances.
+Infrastructure as code Bicep pour des ressources de calcul Azure : machine virtuelle, scale set avec autoscale, App Service et Container Instances.
 
 Consignes completes du TP : [docs/CONSIGNES.md](docs/CONSIGNES.md).
 
-## Organisation du depot
+## Demarrage
 
-| Dossier | Role |
+Trois commandes, rien a editer a la main.
+
+```bash
+make setup                          # questions de configuration, une seule fois
+make what-if STACK=linux-web-server # ce qui va etre cree, sans rien creer
+make deploy  STACK=linux-web-server # deployer
+```
+
+`make setup` verifie la connexion Azure, propose le resource group ou vous avez les droits, genere la cle SSH si elle manque, puis ecrit `config.env` a la racine. Ce fichier est local et ignore par Git : chacun a le sien, personne ne modifie de fichier suivi.
+
+Sans `STACK=`, les cibles proposent la liste des stacks en interactif.
+
+## Les cibles
+
+```bash
+make            # ou 'make help', liste tout
+```
+
+| Cible | Role |
 |---|---|
-| `infra/modules/` | Briques Bicep reutilisables. Jamais deployees seules, appelees par un stack. |
-| `infra/stacks/` | Unites deployables. Un `main.bicep` et un resource group par stack. |
-| `.github/workflows/` | Provisioning et destruction via GitHub Actions. |
-| `docs/` | Consignes et documentation. |
+| `setup` | Pose les questions et ecrit `config.env`. A lancer en premier. |
+| `ssh-key` | Genere `~/.ssh/tp-bicep-az104` avec les bonnes permissions. |
+| `ssh-key-show` | Affiche la cle publique. |
+| `my-ip` | Affiche l'IP publique source au format CIDR. |
+| `stacks` | Liste les stacks et leur resource group. |
+| `check` | Formate, lint, puis fait valider le template par Azure. |
+| `what-if` | Verifie les limites de l'abonnement, puis affiche les changements prevus. |
+| `deploy` | Deploie le stack. |
+| `destroy` | Supprime les ressources du stack, avec confirmation. |
+| `outputs` | Affiche les sorties du stack deploye. |
 
-## Stacks
+## Les stacks
 
 | Stack | Ce qu'il deploie | Etape du TP |
 |---|---|---|
 | `linux-web-server` | VNet, subnet, NSG, IP publique, NIC, VM Ubuntu 22.04 en cle SSH, extension nginx | Etape 1 |
-| `scalable-web-tier` | Load Balancer Standard, VMSS Linux, regles d'autoscale CPU | Etape 2 |
+| `scalable-web-tier` | Load Balancer Standard, VMSS Linux, autoscale CPU 70/30 | Etape 2 |
 | `app-service-platform` | Plan App Service Linux S1, Web App conteneurisee, slot `staging` | Etape 3 |
 | `container-group` | Groupe ACI de deux conteneurs, un web expose et un sidecar | Etape 4 |
 
-## Conventions
+Chaque stack a son `README.md` avec sa commande de verification, celle qui valide reellement l'exercice.
 
-- **Un resource group par stack**, nomme `rg-<alias>-tp104-<stack>`.
-- **Aucun secret en dur.** Cle SSH publique et IP source passees au deploiement. Chaque stack fournit un `dev.sample.bicepparam` a copier en `dev.bicepparam`, ignore par Git.
-- **Chaque stack est valide par une verification**, pas par un simple `Succeeded` au deploiement. La commande est dans le README du stack.
+## Organisation
 
-## Prerequis
+| Dossier | Role |
+|---|---|
+| `infra/stacks/` | Unites deployables. Un `main.bicep` et un `dev.bicepparam` par stack. |
+| `infra/modules/` | Briques Bicep reutilisables, appelees par un stack. |
+| `make/` | Un fichier `.mk` par domaine, sans logique. |
+| `scripts/` | Un script par action, appele par une cible du Makefile. |
+| `.github/workflows/` | Provisioning et destruction via GitHub Actions. |
+| `docs/` | Consignes et documentation. |
 
-```bash
-make ssh-key        # genere ~/.ssh/tp-bicep-az104 si absente, avec les bonnes permissions
-make ssh-key-show   # affiche la cle publique a passer en parametre
-make my-ip          # affiche l'IP publique source a autoriser dans le NSG
-```
+## Comment c'est deploye
 
-La cle privee reste dans `~/.ssh/`, jamais dans le depot. Seule la cle publique circule, en parametre de deploiement.
+Chaque stack est une **deployment stack** Azure, pas un simple deploiement. La stack retient les ressources qu'elle gere, ce qui permet a `make destroy` de les supprimer sans toucher au resource group, partage et pre-cree sur cet abonnement.
 
-## Cycle de travail
+`make what-if` lance d'abord un preflight : il compare ce que le template demande a ce que l'abonnement autorise vraiment, taille de VM offerte dans la region, quota de la famille, generation d'hyperviseur, SKU d'IP publique. Il attrape avant le deploiement ce qu'Azure ne signalerait qu'a la creation.
 
-```bash
-az bicep build --file infra/stacks/<stack>/main.bicep          # verifier la compilation
-az deployment group what-if -g <rg> -f infra/stacks/<stack>/main.bicep -p <stack>/dev.bicepparam
-az deployment group create  -g <rg> -f infra/stacks/<stack>/main.bicep -p <stack>/dev.bicepparam
-az group delete -n <rg> --yes --no-wait                        # detruire
-```
+## Secrets
+
+Rien de sensible n'entre dans le depot.
+
+- La cle privee SSH reste dans `~/.ssh/`, seule la cle publique circule.
+- La cle publique et l'IP source sont lues depuis l'environnement par les fichiers de parametres, via `readEnvironmentVariable`, et exportees par `scripts/lib.sh`. Rien a recopier.
+- `config.env` et les vrais `*.bicepparam` sont ignores par Git. Chaque stack fournit un `dev.sample.bicepparam` commite en modele.
 
 ## Nettoyage
 
 ```bash
-az group list --query "[?starts_with(name, 'rg-<alias>-tp104')].name" -o tsv \
-  | xargs -I {} az group delete --name {} --yes --no-wait
+make destroy STACK=<stack>
 ```
+
+A lancer en fin de seance sur chaque stack deploye. Le plan App Service S1 est facture meme sans trafic.
