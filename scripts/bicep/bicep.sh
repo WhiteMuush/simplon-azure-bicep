@@ -5,34 +5,29 @@
 # shellcheck source=scripts/lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib.sh"
 
-require_alias
-
 ACTION="${1:-}"
 [ -n "$ACTION" ] || die "Usage: bicep.sh <action> [stack]"
 
 resolve_stack "${2:-}"
 
-RG="$(stack_rg "$STACK_NAME")"
 TEMPLATE="$(stack_template "$STACK_NAME")"
 PARAMS="$(stack_params "$STACK_NAME")"
 
 [ -f "$TEMPLATE" ] || die "No template at ${TEMPLATE}."
 
-# Every action but 'build' talks to Azure.
-[ "$ACTION" = "build" ] || require_az
+require_resource_group
+require_az
+az group show --name "$RESOURCE_GROUP" >/dev/null 2>&1 ||
+  die "Resource group '${RESOURCE_GROUP}' not found. Run 'make setup'."
 
-deployment_args() {
-  printf '%s\n' --resource-group "$RG" --name "$STACK_NAME" --template-file "$TEMPLATE"
+template_args() {
+  printf '%s\n' --resource-group "$RESOURCE_GROUP" --name "$STACK_NAME" --template-file "$TEMPLATE"
   [ -z "$PARAMS" ] || printf '%s\n' --parameters "$PARAMS"
 }
 
-ensure_group() {
-  if az group show --name "$RG" >/dev/null 2>&1; then
-    ok "Resource group ${RG} already there"
-  else
-    az group create --name "$RG" --location "$LOCATION" --output none
-    ok "Resource group ${RG} created in ${LOCATION}"
-  fi
+# What the subscription allows, checked before anything reaches Azure.
+preflight() {
+  "$(dirname "${BASH_SOURCE[0]}")/preflight.sh" "$STACK_NAME"
 }
 
 warn_missing_params() {
@@ -41,57 +36,66 @@ warn_missing_params() {
 }
 
 case "$ACTION" in
-  build)
-    step "Compiling ${STACK_NAME}"
-    az bicep build --file "$TEMPLATE" --stdout >/dev/null
-    ok "Template compiles"
-    ;;
+  check)
+    step "Formatting ${STACK_NAME}"
+    az bicep format --file "$TEMPLATE"
+    [ -z "$PARAMS" ] || az bicep format --file "$PARAMS"
+    ok "Files formatted"
 
-  validate)
-    step "Validating ${STACK_NAME} against ${RG}"
+    step "Linting ${STACK_NAME}"
+    az bicep lint --file "$TEMPLATE"
+    ok "No linter error"
+
+    step "Validating ${STACK_NAME} against ${RESOURCE_GROUP}"
     warn_missing_params
-    ensure_group
-    mapfile -t args < <(deployment_args)
+    mapfile -t args < <(template_args)
     az deployment group validate "${args[@]}" --output none
     ok "Template valid"
     ;;
 
   what-if)
-    step "Planned changes for ${STACK_NAME} in ${RG}"
+    preflight
+    step "Planned changes for ${STACK_NAME} in ${RESOURCE_GROUP}"
     warn_missing_params
-    ensure_group
-    mapfile -t args < <(deployment_args)
+    mapfile -t args < <(template_args)
     az deployment group what-if "${args[@]}"
     ;;
 
   deploy)
-    step "Deploying ${STACK_NAME} to ${RG}"
+    # A deployment stack, not a plain deployment: the resource group is shared
+    # and pre-created, so the stack is what remembers which resources to remove.
+    step "Deploying ${STACK_NAME} to ${RESOURCE_GROUP}"
+    warn "Run 'make what-if STACK=${STACK_NAME}' first, it catches what Azure would refuse"
     warn_missing_params
-    ensure_group
-    mapfile -t args < <(deployment_args)
-    az deployment group create "${args[@]}" --output none
+    mapfile -t args < <(template_args)
+    az stack group create "${args[@]}" \
+      --action-on-unmanage deleteAll \
+      --deny-settings-mode none \
+      --yes \
+      --output none
     ok "Deployed, run 'make outputs STACK=${STACK_NAME}' to see the outputs"
     ;;
 
   destroy)
-    step "Deleting ${RG}"
-    az group show --name "$RG" >/dev/null 2>&1 ||
-      die "Nothing to delete, ${RG} does not exist."
+    step "Deleting the resources of ${STACK_NAME} in ${RESOURCE_GROUP}"
+    az stack group show --resource-group "$RESOURCE_GROUP" --name "$STACK_NAME" >/dev/null 2>&1 ||
+      die "Nothing to delete, ${STACK_NAME} was never deployed."
 
     if [ -z "${FORCE:-}" ]; then
       [ -t 0 ] || die "Not a terminal. Re-run with FORCE=1 to skip the prompt."
-      read -r -p "  Delete ${RG} and everything in it? Type the stack name: " answer
+      read -r -p "  Delete every resource of ${STACK_NAME}? Type the stack name: " answer
       [ "$answer" = "$STACK_NAME" ] || die "Answer did not match, nothing deleted."
     fi
 
-    az group delete --name "$RG" --yes --no-wait
-    ok "Deletion started, Azure finishes it in the background"
+    az stack group delete --resource-group "$RESOURCE_GROUP" --name "$STACK_NAME" \
+      --action-on-unmanage deleteAll --yes --output none
+    ok "Resources deleted, the resource group itself is left untouched"
     ;;
 
   outputs)
     step "Outputs of ${STACK_NAME}"
-    az deployment group show --resource-group "$RG" --name "$STACK_NAME" \
-      --query properties.outputs --output json
+    az stack group show --resource-group "$RESOURCE_GROUP" --name "$STACK_NAME" \
+      --query outputs --output json
     ;;
 
   *)

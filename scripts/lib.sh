@@ -8,7 +8,7 @@ STACKS_DIR="${PROJECT_ROOT}/infra/stacks"
 CONFIG_FILE="${PROJECT_ROOT}/config.env"
 
 # Written by 'make setup'. An explicit ALIAS in the environment still wins.
-if [ -z "${ALIAS:-}" ] && [ -f "$CONFIG_FILE" ]; then
+if [ -z "${RESOURCE_GROUP:-}" ] && [ -f "$CONFIG_FILE" ]; then
   set -a
   # shellcheck disable=SC1090
   source "$CONFIG_FILE"
@@ -26,9 +26,8 @@ if [ -f "${SSH_KEY}.pub" ]; then
   export SSH_PUBLIC_KEY
 fi
 
-# Both come from config.env, written by 'make setup'.
-ALIAS="${ALIAS:-}"
-LOCATION="${LOCATION:-francecentral}"
+# Written by 'make setup'. The lab deploys into an existing resource group.
+RESOURCE_GROUP="${RESOURCE_GROUP:-}"
 
 export STACK_NAME=""
 
@@ -79,12 +78,8 @@ resolve_stack() {
 }
 
 # One resource group per stack, as the lab requires.
-require_alias() {
-  [ -n "$ALIAS" ] || die "No alias yet. Run 'make setup'."
-}
-
-stack_rg() {
-  echo "rg-${ALIAS}-tp104-${1}"
+require_resource_group() {
+  [ -n "$RESOURCE_GROUP" ] || die "No resource group yet. Run 'make setup'."
 }
 
 stack_template() {
