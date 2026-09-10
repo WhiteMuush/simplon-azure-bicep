@@ -11,11 +11,11 @@ check: ## Format, lint, then validate the stack against Azure
 what-if: ## Show the changes the deployment would make
 	@scripts/bicep/bicep.sh what-if "$(STACK)"
 
-deploy: ## Create the resource group if needed, then deploy the stack
+deploy: ## Deploy the stack into the configured resource group
 	@scripts/bicep/bicep.sh deploy "$(STACK)"
 
-destroy: ## Delete the resource group of the stack, asks for confirmation
+destroy: ## Delete the resources of the stack, asks for confirmation
 	@scripts/bicep/bicep.sh destroy "$(STACK)"
 
-outputs: ## Print the outputs of the last deployment
+outputs: ## Print the outputs of the deployed stack
 	@scripts/bicep/bicep.sh outputs "$(STACK)"
