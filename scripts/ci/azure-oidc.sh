@@ -51,6 +51,15 @@ add_credential() {
 add_credential "${ENVIRONMENT}-environment" "repo:${REPO}:environment:${ENVIRONMENT}"
 add_credential "main-branch" "repo:${REPO}:ref:refs/heads/main"
 
+# GitHub now presents an immutable subject carrying the owner and repository
+# ids, so the plain names above never match on their own.
+OWNER_ID="$(gh api "repos/${REPO}" -q .owner.id)"
+REPO_ID="$(gh api "repos/${REPO}" -q .id)"
+IMMUTABLE="repo:${REPO%%/*}@${OWNER_ID}/${REPO#*/}@${REPO_ID}"
+
+add_credential "${ENVIRONMENT}-environment-id" "${IMMUTABLE}:environment:${ENVIRONMENT}"
+add_credential "main-branch-id" "${IMMUTABLE}:ref:refs/heads/main"
+
 step "Role assignment"
 if az role assignment list --assignee "$OBJECT_ID" --scope "$SCOPE" --query "[?roleDefinitionName=='Contributor']" -o tsv | grep -q .; then
   ok "Contributor on ${RESOURCE_GROUP} already there"

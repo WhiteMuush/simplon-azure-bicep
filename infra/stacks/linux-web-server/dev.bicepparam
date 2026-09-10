@@ -1,4 +1,3 @@
-// Copy to dev.bicepparam, which Git ignores.
 using './main.bicep'
 
 param vmName = 'mpvmlinux'
@@ -6,7 +5,7 @@ param adminUsername = 'azureuser'
 
 // Public key read from ~/.ssh/tp-bicep-az104.pub by the Makefile scripts.
 param authenticationType = 'sshPublicKey'
-param sshKey = trim(readEnvironmentVariable('SSH_PUBLIC_KEY')) # Do a make ssh-key
+param sshKey = trim(readEnvironmentVariable('SSH_PUBLIC_KEY'))
 
 param ubuntuOSVersion = 'Ubuntu-2204'
 // Standard_B1s is not offered in francecentral, an Azure Policy limits the
