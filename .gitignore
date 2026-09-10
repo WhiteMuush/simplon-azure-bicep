@@ -5,3 +5,10 @@
 .DS_Store
 .idea/
 .vscode/
+
+# ARM JSON genere par az bicep build
+infra/**/*.json
+
+# Fichiers de parametres reels
+*.bicepparam
+!*.sample.bicepparam
