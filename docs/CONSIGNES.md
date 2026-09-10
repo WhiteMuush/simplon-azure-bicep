@@ -4,7 +4,7 @@
 
 **Prerequisites**
 
-- Bicep basics (`resource`, `param`, `var`, `output`, `az deployment group create`). See the Microsoft Learn module [Bicep fundamentals](https://learn.microsoft.com/en-us/training/modules/create-first-bicep-template/) if needed.
+- Bicep basics (`resource`, `param`, `var`, `output`, `az deployment group create`). See the Microsoft Learn module [Build your first Bicep file](https://learn.microsoft.com/en-us/training/modules/build-first-bicep-file/) if needed.
 - Azure CLI installed.
 - An Azure subscription with the Contributor role.
 
@@ -82,7 +82,7 @@ ssh-keygen -t ed25519 -C "tp-bicep-az104"
 
 ### Concept
 
-Matches the module *"Azure virtual machines overview"*. An Azure VM is more than the machine itself: it depends on a virtual network, a subnet, a network security group (NSG), a network interface (NIC) and, to reach it from the Internet, a public IP. In Bicep each of these is a resource of its own, wired to the others through references (`nic.id`, `vnet.id`) that create implicit dependencies. Azure Resource Manager then deploys them in the right order without you writing that order yourself.
+Matches the module [*"Introduction to Azure virtual machines"*](https://learn.microsoft.com/en-us/training/modules/intro-to-azure-virtual-machines/). An Azure VM is more than the machine itself: it depends on a virtual network, a subnet, a network security group (NSG), a network interface (NIC) and, to reach it from the Internet, a public IP. In Bicep each of these is a resource of its own, wired to the others through references (`nic.id`, `vnet.id`) that create implicit dependencies. Azure Resource Manager then deploys them in the right order without you writing that order yourself.
 
 ### Exercise 1.1: network and security
 
@@ -128,7 +128,7 @@ must return an HTML page containing the VM hostname. An SSH attempt using a pass
 
 ### Concept
 
-Matches the module *"Configure virtual machine availability"*. A single VM is a single point of failure. Replace it with a **Virtual Machine Scale Set** (VMSS) behind a **Load Balancer**, with **autoscale** rules that add or remove instances based on load.
+Matches the module [*"Configure virtual machine availability"*](https://learn.microsoft.com/en-us/training/modules/configure-virtual-machine-availability/). A single VM is a single point of failure. Replace it with a **Virtual Machine Scale Set** (VMSS) behind a **Load Balancer**, with **autoscale** rules that add or remove instances based on load.
 
 ### Exercise 2.1: load balancer and VMSS
 
@@ -163,7 +163,7 @@ run several times must show different hostnames. To observe autoscale without wa
 
 ### Concept
 
-Matches the modules *"Configure Azure App Service plans"* and *"Configure Azure App Service"*. An App Service plan defines the compute capacity (SKU, OS); one or more Web Apps attach to it. **Deployment slots** let you stage a new version alongside production, then swap without downtime.
+Matches the modules [*"Configure Azure App Service plans"*](https://learn.microsoft.com/en-us/training/modules/configure-app-service-plans/) and [*"Configure Azure App Service"*](https://learn.microsoft.com/en-us/training/modules/configure-azure-app-services/). An App Service plan defines the compute capacity (SKU, OS); one or more Web Apps attach to it. **Deployment slots** let you stage a new version alongside production, then swap without downtime.
 
 ### Exercise 3.1: plan and Web App
 
@@ -198,7 +198,7 @@ must both answer `200 OK`. Perform a swap with `az webapp deployment slot swap` 
 
 ### Concept
 
-Matches the module *"Configure Azure Container Instances"*. ACI runs one or more containers without managing a VM or a cluster. A **container group** shares the same network lifecycle: it is the deployment unit, not the individual container.
+Matches the module [*"Configure Azure Container Instances"*](https://learn.microsoft.com/en-us/training/modules/configure-azure-container-instances/). ACI runs one or more containers without managing a VM or a cluster. A **container group** shares the same network lifecycle: it is the deployment unit, not the individual container.
 
 ### Exercise 4.1: a group of two containers
 
